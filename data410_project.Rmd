@@ -27,38 +27,79 @@ Our project aims to close this gap by developing a predictive model that can est
 ## Data Preparation
 ```{r}
 #load features and targets and then combine the two
-data_features = read.csv("infrared_thermography_data_features.csv")
-data_targets = read.csv("infrared_thermography_data_targets.csv")
-#created a new column called SubjectID in Excel to combine target and features and then use by=SubjectID to merge x and y.
-data = merge(data_targets,data_features, by = 'SubjectID')
+X = read.csv("infrared_thermography_data_features.csv")
+Y = read.csv("infrared_thermography_data_targets.csv")
 
-#find which ones are categorical by seeing the structure
-str(data)
+attach(Y)
 
+#combine x and y
+data = cbind(aveOralM,X)
+attach(data)
 #factor categorical variables
-data$Gender = factor(data$Gender)
-data$Age = factor(data$Age)
-data$Ethnicity = factor(data$Ethnicity)
+data$Gender = factor(data$Gender, levels = c("Male", "Female"), labels = c(0, 1))
+data$Age[data$Age %in% c("26-30", "21-25")]  = "21-30"
+data$Age = factor(data$Age, levels = c("18-20", "21-30", "31-40", "41-50", "51-60", ">60"), labels = c(0, 1, 2, 3, 4, 5))
+data$Ethnicity <- factor(data$Ethnicity, levels = c("White", "Black or African-American", "Asian", "Multiracial", "Hispanic/Latino", "American Indian or Alaskan Native"), labels = c(0, 1, 2, 3, 4, 5))
 
-#check data for missing values
+#check data for missing values and to check which column is missing data
 sum(is.na(data))
-
-#remove the missing rows since there are only 2 rows with missing values at the Distance column so this is an easy dataset to deal with.
-# This approach is effective because we have minimal missing data
-data = na.omit(data)
+colSums(is.na(data))
+data = na.omit(data) #Removing the 2 observations we found in the distance column, easy to deal with as there are only 2 observations.
 
 summary(data)
+
+attach(data)
 ```
 
 There are two missing values in the dataset, which we simply remove as the amount of missing data is minimal. The 2 missing values are in the Distance column.
-
 
 ## Exploratory Data Analysis (EDA)
 ```{r}
 #Looking at our target variables first
 # add the breaks so that we can see the data clearer, otherwise bins are too wide to be able to show any useful information
-hist(data$aveOralF, main = "Histogram of aveOralF", xlab = "Oral Temperature (Fast Mode)", breaks = 20)
+# hist(data$aveOralF, main = "Histogram of aveOralF", xlab = "Oral Temperature (Fast Mode)", breaks = 20)
 hist(data$aveOralM, main = "Histogram of aveOralM", xlab = "Oral Temperature (Monitor Mode)", breaks = 20)
+
+#Checking plot of each variable
+# For numeric variables: histograms
+for(i in 1:ncol(data)){
+  if(is.numeric(data[[i]])){
+    plot( data[[i]], aveOralM,main=paste("Plot of", names(data)[i]), xlab=names(data)[i])
+  }
+}
+
+data <- subset(data, Distance <= 60)
+
+# For numeric variables: histograms
+i = 0
+for(i in 1:ncol(data)){
+  if(is.numeric(data[[i]])){
+    plot( data[[i]], data$aveOralM,main=paste("Plot of", names(data)[i]), xlab=names(data)[i], ylab = "aveoralM")
+  }
+}
+
+
+# data description/EDA
+barplot(table(data[[2]]), main=paste("Bar plot of", names(data)[2]), xlab=names(data)[2])
+barplot(table(data[[3]]), main=paste("Bar plot of Age Groups"), xlab=names(data)[3])
+barplot(table(data[[4]]), main=paste("Bar plot of", names(data)[4]), xlab=names(data)[4])
+
+
+head(data)
+
+
+```
+
+```{r}
+model <- lm(aveOralM~., data = data)
+residuals <- residuals(model)
+fitted_values <- fitted(model)
+
+plot(fitted_values,residuals)
+plot(data$T_atm,residuals)
+abline(h = 0, col = "red")
+
+plot(model)
 ```
 By plotting the histogram of oral temperature fast mode and monitor mode, we can see that both histograms are right-skewed, which could indicate potential outliers. Let's see how the boxplot looks to determine if we need to transform the data
 
