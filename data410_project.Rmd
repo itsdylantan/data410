@@ -60,17 +60,9 @@ There are two missing values in the dataset, which we simply remove as the amoun
 # hist(data$aveOralF, main = "Histogram of aveOralF", xlab = "Oral Temperature (Fast Mode)", breaks = 20)
 hist(data$aveOralM, main = "Histogram of aveOralM", xlab = "Oral Temperature (Monitor Mode)", breaks = 20)
 
-#Checking plot of each variable
-# For numeric variables: histograms
-for(i in 1:ncol(data)){
-  if(is.numeric(data[[i]])){
-    plot( data[[i]], aveOralM,main=paste("Plot of", names(data)[i]), xlab=names(data)[i])
-  }
-}
 
 data <- subset(data, Distance <= 60)
 
-# For numeric variables: histograms
 i = 0
 for(i in 1:ncol(data)){
   if(is.numeric(data[[i]])){
@@ -91,10 +83,11 @@ head(data)
 ```
 
 ```{r}
-model <- lm(aveOralM~., data = data)
+model <- glm(aveOralM~., data = data)
 residuals <- residuals(model)
 fitted_values <- fitted(model)
 
+summary(model)
 plot(fitted_values,residuals)
 plot(data$T_atm,residuals)
 abline(h = 0, col = "red")
@@ -103,13 +96,3 @@ plot(model)
 ```
 By plotting the histogram of oral temperature fast mode and monitor mode, we can see that both histograms are right-skewed, which could indicate potential outliers. Let's see how the boxplot looks to determine if we need to transform the data
 
-```{r}
-boxplot(data$aveOralF, main = "Boxplot for aveOralF")
-boxplot(data$aveOralM, main = "Boxplot for aveOralM")
-```
-
-The boxplot for aveOralF and aveOralM shows a small interquartile range, with many outliers present.
-To deal with these outliers, we perform a log transformation on the data
-
-
-THIS IS TO TEST THAT OUR GIT IS WORKING
