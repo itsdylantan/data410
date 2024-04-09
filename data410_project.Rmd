@@ -1,0 +1,71 @@
+---
+title: "DATA410 Project"
+author: "Dylan Tan"
+date: "2024-04-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Predicting core body temperature using infrared thermography (IRT) 
+
+## Introduction
+
+In recent years, the medical field has seen a significant increase in the use of non-invasive diagnostic techniques, which are techniques that do not require the introduction of instruments into the body, to get real-time estimates of a patient's core body temperature, with infrared thermography (IRT) becoming an important tool for physiological monitoring and disease detection. This is particularly useful for clinical settings and during infectious disease epidemics. For example, in the year 2020 during the COVID-19 pandemic, the Kuala Lumpur International Airport (KLIA) utilized thermal scanners to detect passenger’s body temperatures to determine if they were potential carriers of the COVID-19 disease. Only passengers with a core body temperature of below 37 degrees Celsius were allowed to move into the airport’s check-in area. 
+
+
+The non-invasive nature of IRT enables its extensive utilization in various medical applications, as abnormal body temperature serves as a natural indicator of illnesses. Biomedical research has showcased the efficiency of IRT in diverse diagnostic endeavors, including the detection of breast cancer, diabetes neuropathy, peripheral vascular disorders, gynecological issues, kidney transplantation, dermatological conditions, cardiac abnormalities, neonatal physiology, fever screening, and brain imaging (Kylili et al., 2014).
+
+
+IRT's capability to visualize and quantify changes in surface temperatures has led to its application in monitoring a wide range of medical conditions, such as severe acute respiratory syndrome, Ebola virus disease, or even the  coronavirus disease in 2019.  A crucial aspect of using IRT lies in the accurate interpretation of thermal images, particularly in correlating external thermal readings with core body temperatures. 
+
+
+Our project aims to close this gap by developing a predictive model that can estimate oral temperature—a common measuring technique of core body temperature—using thermal imaging data from IRTs and environmental factors such as ambient temperature, relative humidity, and the distance between the subjects and the IRTs. This model could potentially enhance the clinical use of IRT by providing non-invasive measurement methods, offering a significant advantage in both routine health assessments and the early detection of health problems, as well as the detection of carriers of infectious diseases. We hypothesize that by using environmental factors and IRTs, we can predict oral temperature.
+
+
+## Data Preparation
+```{r}
+#load features and targets and then combine the two
+data_features = read.csv("infrared_thermography_data_features.csv")
+data_targets = read.csv("infrared_thermography_data_targets.csv")
+#created a new column called SubjectID in Excel to combine target and features and then use by=SubjectID to merge x and y.
+data = merge(data_targets,data_features, by = 'SubjectID')
+
+#find which ones are categorical by seeing the structure
+str(data)
+
+#factor categorical variables
+data$Gender = factor(data$Gender)
+data$Age = factor(data$Age)
+data$Ethnicity = factor(data$Ethnicity)
+
+#check data for missing values
+sum(is.na(data))
+
+#remove the missing rows since there are only 2 rows with missing values at the Distance column so this is an easy dataset to deal with.
+# This approach is effective because we have minimal missing data
+data = na.omit(data)
+
+summary(data)
+```
+
+There are two missing values in the dataset, which we simply remove as the amount of missing data is minimal. The 2 missing values are in the Distance column.
+
+
+## Exploratory Data Analysis (EDA)
+```{r}
+#Looking at our target variables first
+# add the breaks so that we can see the data clearer, otherwise bins are too wide to be able to show any useful information
+hist(data$aveOralF, main = "Histogram of aveOralF", xlab = "Oral Temperature (Fast Mode)", breaks = 20)
+hist(data$aveOralM, main = "Histogram of aveOralM", xlab = "Oral Temperature (Monitor Mode)", breaks = 20)
+```
+By plotting the histogram of oral temperature fast mode and monitor mode, we can see that both histograms are right-skewed, which could indicate potential outliers. Let's see how the boxplot looks to determine if we need to transform the data
+
+```{r}
+boxplot(data$aveOralF, main = "Boxplot for aveOralF")
+boxplot(data$aveOralM, main = "Boxplot for aveOralM")
+```
+
+The boxplot for aveOralF and aveOralM shows a small interquartile range, with many outliers present.
+To deal with these outliers, we perform a log transformation on the data
