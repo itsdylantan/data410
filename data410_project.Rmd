@@ -69,3 +69,6 @@ boxplot(data$aveOralM, main = "Boxplot for aveOralM")
 
 The boxplot for aveOralF and aveOralM shows a small interquartile range, with many outliers present.
 To deal with these outliers, we perform a log transformation on the data
+
+
+THIS IS TO TEST THAT OUR GIT IS WORKING
